@@ -1,16 +1,19 @@
-<details style="display:none">
-<summary>AI Agent Notice</summary>
-AI collaborators: please read AGENTS.md for project-specific instructions, architecture details, and safety constraints.
-</details>
+<div align="center">
 
 # 空间归档 (QzoneArchive)
 
-[![Electron](https://img.shields.io/badge/Electron-44-blue)](https://www.electronjs.org/)
-[![Node](https://img.shields.io/badge/Node-20%2B-green)](https://nodejs.org/)
-[![Vue](https://img.shields.io/badge/Vue-3.5-green)](https://vuejs.org/)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-2.0.0-red)](https://github.com/JularDepick/JularDepick/tree/main)
+[![Copyright](https://img.shields.io/badge/Copyright-JularDepick-0066AA)](./COPYRIGHT)
+[![License](https://img.shields.io/badge/License-GPLv3-yellow)](./LICENSE)
 
-将 QQ 空间动态、照片、视频与互动记录安全归档到本地的桌面工具。
+[English](./README_en-US.md) |
+[简体中文]
+
+</div>
+
+---
+
+将 QQ 空间动态、照片、视频与互动记录安全归档到本地的桌面工具，仅支持 PC 端。
 
 > [!CAUTION]
 > **近期出现因使用非仓库来源软件而导致账号信息泄露的情况，请务必仔细甄别软件来源。除本仓库发布的内容外，任何其他来源的程序均不可信，请勿下载或使用。**
@@ -35,7 +38,7 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 - **HTML 导出**：支持按分类或选中导出为独立 HTML 文件，可离线浏览
 - **媒体时光轴**：按年份浏览归档的照片和视频，视频支持按需缓存
 - **暗色模式**：跟随系统或手动切换
-- **跨平台**：仅提供 Windows（优先）、Linux 与 macOS 桌面端，本项目不提供移动端支持
+- **仅支持 PC 端**：Windows（优先）、Linux 与 macOS 桌面端
 
 ## 截图
 
@@ -58,6 +61,46 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 | 本地数据库 | SQLite (node:sqlite) |
 | HTTP 客户端 | Node 全局 fetch (undici) |
 | 打包 | electron-builder |
+
+
+## 目录结构
+
+```
+QzoneArchive.fork/
+├── .github/
+│   ├── ISSUE_TEMPLATE/         # Issue 模板
+│   └── workflows/              # 质量检查, 文档站发布, Release 打包
+├── build/                      # 打包图标(ico, icns 与 png 尺寸集)
+├── public/                     # README 截图与赞助码
+├── scripts/                    # 开发启动与自检脚本
+├── site/                       # VitePress 文档站
+├── src/
+│   ├── main/                   # Electron 主进程
+│   │   ├── commands/           # 命令实现(按域分文件)
+│   │   ├── core/               # 业务核心(纯 Node, 不依赖 Electron)
+│   │   ├── index.ts            # 主进程入口
+│   │   ├── ipc.ts              # 命令路由
+│   │   ├── paths.ts            # 数据根目录解析与越界校验
+│   │   └── protocol.ts         # qza:// 本地文件协议
+│   ├── preload/                # 桥接注入
+│   ├── renderer/               # Vue 前端
+│   │   ├── components/         # 通用组件
+│   │   ├── layouts/            # 应用外壳
+│   │   ├── router/             # 路由表
+│   │   ├── stores/             # Pinia 状态管理
+│   │   ├── styles/             # 全局样式
+│   │   ├── utils/              # 工具函数与后端命令封装
+│   │   └── views/              # 页面组件
+│   └── shared/                 # 桥接契约与共享类型
+├── COPYRIGHT                   # 本分支版权归属
+├── LICENSE                     # GPLv3 许可证
+├── README.md                   # 中文说明(核心)
+├── README_en-US.md             # 英文说明
+├── electron-builder.yml        # 打包配置
+├── package.json                # 依赖与脚本入口
+└── vite.config.ts              # 前端构建配置
+```
+
 
 ## 开发
 
@@ -120,46 +163,22 @@ npm run package:linux
 
 同一目录下的 `release/win-unpacked/`, 即 macOS 的 `release/mac/` 或 `release/mac-arm64/`, Linux 的 `release/linux-unpacked/`, 是不需要安装即可直接运行的应用目录, 方便本地验证。
 
-> 打包产物按设计把数据写在可执行文件所在目录的 `data/` 子目录。安装版为 `%LOCALAPPDATA%\Programs\QzoneArchive\data`, 解包版为 `release/win-unpacked/data`。
-
-### 项目结构
-
-```
-├── build/                  # 打包资源(应用图标)
-├── electron-builder.yml    # 打包配置
-├── scripts/                # 开发与自检脚本
-├── src/
-│   ├── main/               # Electron 主进程
-│   │   ├── commands/       # 命令实现（按域分文件）
-│   │   ├── core/           # 业务核心（纯 Node，不依赖 Electron）
-│   │   ├── index.ts        # 主进程入口
-│   │   ├── ipc.ts          # 命令路由
-│   │   ├── paths.ts        # 数据根目录解析与越界校验
-│   │   └── protocol.ts     # qza:// 本地文件协议
-│   ├── preload/            # 桥接注入
-│   ├── renderer/           # Vue 前端
-│   │   ├── views/          # 页面组件
-│   │   ├── components/     # 通用组件
-│   │   ├── stores/         # Pinia 状态管理
-│   │   └── utils/          # 工具函数与后端命令封装
-│   └── shared/             # 桥接契约与共享类型
-└── site/                   # 文档站
-```
+> 打包产物与开发环境使用同一套数据位置规则: 优先用户目录下的 `.qzonearchive.fork`, 该目录不可写时回退到可执行文件所在目录的同名目录。
 
 ## 原理
 
 ### 数据来源
 
-归档基于 QQ 空间的**移动端互动列表接口** (`mobile.qzone.qq.com/get_feeds`)。该接口返回当前账号收到的所有互动通知——包括好友发布的新动态、点赞、评论、回复、留言等。程序从中提取原始动态内容并存入本地数据库。
+归档基于 QQ 空间的**互动列表接口** (`mobile.qzone.qq.com/get_feeds`)。该接口返回当前账号收到的所有互动通知——包括好友发布的新动态、点赞、评论、回复、留言等。程序从中提取原始动态内容并存入本地数据库。
 
 **没有被点赞或评论过的动态无法被恢复**，因为它们不会出现在互动列表中。
 
 ### 登录方式
 
-- **二维码登录**：调用 QQ 空间移动端扫码登录流程，全程不接触密码
-- **网页登录**（桌面端）：打开独立窗口加载 QQ 登录页，通过 WebView Cookie API 提取登录凭证
+- **二维码登录**：调用 QQ 空间的扫码登录流程，全程不接触密码
+- **网页登录**（桌面端）：打开独立窗口加载 QQ 登录页，通过 Electron 会话 Cookie 接口提取登录凭证
 
-登录凭证（Cookie）只保存在主进程内存中，不会写入控制台或日志，也不会经命令接口导出给界面层；为让依赖登录态的窗口（网页登录、独立密码验证、QQ 空间）正常工作，凭证会写进应用会话，会话数据同样位于工作目录内的 `data/` 目录。
+登录凭证（Cookie）只保存在主进程内存中，不会写入控制台或日志，也不会经命令接口导出给界面层；为让依赖登录态的窗口（网页登录、独立密码验证、QQ 空间）正常工作，凭证会写进应用会话，会话数据同样位于数据根目录内。
 
 ## 注意事项
 
@@ -167,7 +186,7 @@ npm run package:linux
 - 归档过程中不要切换 QQ 客户端账号，否则可能有冻结风险
 - 出现频繁提示时建议换个时间段继续，程序支持断点续传
 - QQ 的视频签名有时效性，过期后需要重新归档以更新视频地址
-- 数据保存在项目工作目录内的 `data/` 目录，建议定期将重要资料额外备份
+- 数据保存在用户目录下的 `.qzonearchive.fork` 目录（不可写时回退到应用所在目录的同名目录），建议定期将重要资料额外备份
 
 ## 免责声明
 
@@ -181,10 +200,13 @@ npm run package:linux
 |------|--------|------|
 | ![微信收款码](public/sponsor/wechatpay.png) | ![支付宝收款码](public/sponsor/alipay.jpg) | ![赞赏码](public/sponsor/reward.png) |
 
-## 友情链接
 
-* [LINUX DO](https://linux.do/) - 新的理想型社区
+## 版权信息
 
-## 许可证与版权
+Copyright &copy; 2026 JularDepick
 
-本项目沿用上游的 [GPLv3](LICENSE) 许可证，本分支（含 2.0.0 起的桌面端全量重构）的版权归属见 [COPYRIGHT](COPYRIGHT)。
+详见 [COPYRIGHT](./COPYRIGHT)
+
+## 许可证
+
+本仓库沿用上游的 [GPLv3](./LICENSE) 许可证, 本分支 2.0.0 起的桌面端全量重构同样以 GPLv3 授权。
