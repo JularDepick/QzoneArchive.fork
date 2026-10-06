@@ -5,8 +5,8 @@
  * 类型统一使用 Qza 前缀, 避免污染通用命名
  */
 
-/** 与 Tauri 插件 platform() 对齐的平台枚举 */
-type QzaPlatform = "windows" | "macos" | "linux" | "android" | "ios" | "web";
+/** 与 Tauri 插件 platform() 对齐的平台枚举, 只覆盖桌面三平台与浏览器预览 */
+type QzaPlatform = "windows" | "macos" | "linux" | "web";
 
 /** 主进程代发 HTTP 请求时的可选参数 */
 interface QzaRemoteFetchInit {

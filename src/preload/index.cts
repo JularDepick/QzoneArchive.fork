@@ -12,7 +12,6 @@ const PLATFORM_NAMES: Partial<Record<NodeJS.Platform, QzaPlatform>> = {
   win32: "windows",
   darwin: "macos",
   linux: "linux",
-  android: "android",
 };
 
 const bridge: QzaBridge = {

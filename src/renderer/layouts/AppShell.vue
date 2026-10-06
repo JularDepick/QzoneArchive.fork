@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import { useRoute, useRouter } from "vue-router";
-import { openQzoneBrowserWindow, openUrl, platform } from "../utils/ipc";
+import { useRouter } from "vue-router";
+import { openQzoneBrowserWindow, openUrl } from "../utils/ipc";
 import Button from "primevue/button";
-import Drawer from "primevue/drawer";
 import Popover from "primevue/popover";
 import LoginDialog from "../components/LoginDialog.vue";
 import sidebarToggleIcon from "../assets/sidebar-toggle.png";
@@ -15,16 +14,12 @@ defineProps<{ pageTitle: string }>();
 const appStore = useAppStore();
 const authStore = useAuthStore();
 const router = useRouter();
-const route = useRoute();
 const accountPopover = ref<InstanceType<typeof Popover>>();
-const moreVisible = ref(false);
 const logoutLoading = ref(false);
 const { darkMode, sidebarCollapsed, themeIcon } = storeToRefs(appStore);
 const { loggedIn, user } = storeToRefs(authStore);
-const showQzoneButton = computed(() => {
-  const currentPlatform = platform();
-  return currentPlatform !== "android" && currentPlatform !== "ios";
-});
+/** QQ 空间入口在桌面三平台与网页预览下都可用 */
+const showQzoneButton = true;
 const navigation = [
   { label: "概览", icon: "pi pi-home", to: "/" },
   { label: "归档", icon: "pi pi-inbox", to: "/archives" },
@@ -34,12 +29,8 @@ const navigation = [
   { label: "回收站", icon: "pi pi-trash", to: "/recycle-bin" },
 ];
 const settingsItem = { label: "设置", icon: "pi pi-cog", to: "/settings" };
-const mobileNavigation = [navigation[0], navigation[1], navigation[3], navigation[4]];
-const mobileMoreNavigation = [navigation[2], settingsItem];
-const moreActive = computed(() => mobileMoreNavigation.some((item) => item.to === route.path));
 function qzoneUrl() {
   const uin = user.value?.uin;
-  if (platform() === "android") return uin ? `https://m.qzone.qq.com/${uin}` : "https://m.qzone.qq.com";
   return uin ? `https://user.qzone.qq.com/${uin}` : "https://user.qzone.qq.com";
 }
 async function openQzoneWindow() {
@@ -119,23 +110,6 @@ async function logout() {
       </header>
       <main class="page-content"><slot /></main>
     </div>
-    <nav class="mobile-navigation" aria-label="移动端导航">
-      <RouterLink v-for="item in mobileNavigation" :key="item.to" :to="item.to">
-        <i :class="item.icon" /><span>{{ item.label }}</span>
-      </RouterLink>
-      <button class="mobile-navigation-item" :class="{ 'is-active': moreActive }" type="button" aria-label="打开更多页面" @click="moreVisible = true">
-        <i class="pi pi-ellipsis-h" /><span>更多</span>
-      </button>
-    </nav>
-    <Drawer v-model:visible="moreVisible" position="bottom" header="更多" class="mobile-more-drawer">
-      <nav class="mobile-more-navigation" aria-label="更多页面">
-        <RouterLink v-for="item in mobileMoreNavigation" :key="item.to" :to="item.to" @click="moreVisible = false">
-          <span class="mobile-more-icon"><i :class="item.icon" /></span>
-          <span><strong>{{ item.label }}</strong><small>{{ item.to === '/contacts' ? '查看与你互动过的联系人' : '归档频率、主题与数据管理' }}</small></span>
-          <i class="pi pi-angle-right" />
-        </RouterLink>
-      </nav>
-    </Drawer>
     <LoginDialog />
   </div>
 </template>

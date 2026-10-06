@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { platform } from "../utils/ipc";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import ProgressSpinner from "primevue/progressspinner";
@@ -9,10 +7,8 @@ import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
 const { dialogVisible, loading, qrImage, status, message, webLoginMode } = storeToRefs(authStore);
-const showWebLogin = computed(() => {
-  const currentPlatform = platform();
-  return currentPlatform !== "android" && currentPlatform !== "ios";
-});
+/** 桌面三平台与网页预览都支持网页登录 */
+const showWebLogin = true;
 </script>
 
 <template>

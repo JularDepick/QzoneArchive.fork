@@ -17,9 +17,7 @@ export function invoke<T = unknown>(command: string, args?: Record<string, unkno
 
 export function platform(): QzaPlatform {
   if (bridge) return bridge.platform;
-  const agent = typeof navigator === "undefined" ? "" : navigator.userAgent;
-  if (/Android/i.test(agent)) return "android";
-  if (/iPhone|iPad|iPod/i.test(agent)) return "ios";
+  // 浏览器预览没有外壳进程, 统一按网页形态处理
   return "web";
 }
 

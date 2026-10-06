@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from "vue";
-import { closeQzoneBrowserWindow, openQzoneBrowserWindow, openUrl, platform, qzoneBrowserWindowOpen } from "../utils/ipc";
+import { closeQzoneBrowserWindow, openQzoneBrowserWindow, openUrl, qzoneBrowserWindowOpen } from "../utils/ipc";
 import Button from "primevue/button";
 import { useAuthStore } from "../stores/auth";
 
@@ -12,9 +12,6 @@ let stateTimer: number | undefined;
 
 function qzoneUrl() {
   const uin = authStore.user?.uin;
-  if (platform() === "android") {
-    return uin ? `https://m.qzone.qq.com/${uin}` : "https://m.qzone.qq.com";
-  }
   return uin ? `https://user.qzone.qq.com/${uin}` : "https://user.qzone.qq.com";
 }
 

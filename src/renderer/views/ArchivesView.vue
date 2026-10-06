@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
-import { convertFileSrc, platform, save, writeFile } from "../utils/ipc";
+import { convertFileSrc, save, writeFile } from "../utils/ipc";
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
 import Dialog from "primevue/dialog";
@@ -54,9 +54,6 @@ let longPressTimer: ReturnType<typeof setTimeout> | undefined;
 const expandedComments = reactive(new Set<number>());
 const expandedLikes = reactive(new Set<number>());
 let imageObserver: IntersectionObserver | undefined;
-const currentPlatform = platform();
-const desktopPlatforms = new Set(["windows", "macos", "linux"]);
-const isDesktopPlatform = desktopPlatforms.has(currentPlatform);
 
 const filtered = computed(() => {
   const key = query.value.trim().toLowerCase();
@@ -256,7 +253,7 @@ onBeforeUnmount(() => { clearLongPress(); imageObserver?.disconnect(); releaseVi
 </script>
 
 <template>
-  <div class="archive-page" :class="isDesktopPlatform ? 'platform-desktop' : 'platform-mobile'">
+  <div class="archive-page">
   <section class="archive-header surface-card">
     <div class="archive-header-copy">
       <span class="archive-header-icon"><i class="pi pi-box" /></span>

@@ -7,7 +7,6 @@ const PLATFORM_NAMES: Partial<Record<NodeJS.Platform, QzaPlatform>> = {
   win32: "windows",
   darwin: "macos",
   linux: "linux",
-  android: "android",
 };
 
 export function registerAppCommands(): void {
