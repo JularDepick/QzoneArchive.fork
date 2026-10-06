@@ -1,16 +1,18 @@
 /**
  * 运行时路径解析
  *
- * 设计约束: 应用产生的所有数据只允许落在工作目录内, 不允许写入 AppData 等外部位置
+ * 设计约束: 应用产生的数据优先落在用户目录下的 .qzonearchive.fork;
+ * 该位置无写权限时自动回退到应用所在目录下的同名目录, 两处都不可写则直接报错
  * 数据根目录名与子目录名集中在此定义, 便于开发者调整
  */
 import { app } from "electron";
 import { mkdirSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
+import { DATA_DIR_NAME, resolveDataLocation } from "./core/dataLocation.js";
 
 type RuntimePathName = Parameters<typeof app.setPath>[0];
 
-export const DATA_DIR_NAME = "data";
+export { DATA_DIR_NAME };
 export const DATABASE_FILE_NAME = "qzone-archive.sqlite3";
 export const IMAGE_DIR_NAME = "images";
 export const VIDEO_DIR_NAME = "videos";
@@ -33,17 +35,25 @@ function assertInside(root: string, target: string): string {
   const normalizedRoot = resolve(root);
   const normalizedTarget = resolve(target);
   if (normalizedTarget !== normalizedRoot && !normalizedTarget.startsWith(normalizedRoot + sep)) {
-    throw new Error(`路径越界, 数据只允许落在工作目录内: ${normalizedTarget}`);
+    throw new Error(`路径越界, 数据只允许落在数据根目录内: ${normalizedTarget}`);
   }
   return normalizedTarget;
 }
 
-/** 数据根目录, 可用 QZA_DATA_DIR 覆盖, 但覆盖值必须仍在工作目录内 */
+let cachedRoot: string | null = null;
+
+/**
+ * 数据根目录
+ *
+ * 可用环境变量 QZA_DATA_DIR 显式指定; 未指定时优先用户目录, 无写权限则回退应用目录
+ */
 export function dataRoot(): string {
-  const root = appRoot();
-  const override = process.env.QZA_DATA_DIR;
-  const target = override && override.length > 0 ? override : join(root, DATA_DIR_NAME);
-  return assertInside(root, target);
+  if (cachedRoot === null) {
+    const override = process.env.QZA_DATA_DIR;
+    cachedRoot =
+      override && override.length > 0 ? resolve(override) : resolveDataLocation(appRoot()).root;
+  }
+  return cachedRoot;
 }
 
 /** 数据根目录下的相对路径, 越界即抛错 */

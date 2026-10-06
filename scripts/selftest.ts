@@ -7,9 +7,10 @@
  */
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { resolveDataLocation } from "../dist/electron/main/core/dataLocation.js";
 
 const projectRoot = process.cwd();
-const workDir = join(projectRoot, "data", "tmp", "selftest");
+const workDir = join(resolveDataLocation(projectRoot).root, "tmp", "selftest");
 const databaseFile = join(workDir, "selftest.sqlite3");
 
 interface RawDatabase {

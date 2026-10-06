@@ -6,10 +6,11 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveDataLocation } from "../dist/electron/main/core/dataLocation.js";
 import { electronLaunchArgs } from "./electronArgs.ts";
 
 const projectRoot = process.cwd();
-const reportFile = join(projectRoot, "data", "smoke-report.json");
+const reportFile = join(resolveDataLocation(projectRoot).root, "smoke-report.json");
 const TIMEOUT_MS = 60_000;
 
 function electronBinary(): string {

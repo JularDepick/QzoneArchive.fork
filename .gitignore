@@ -8,11 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-website/dist
-website/.astro
-website/build
-website/.docusaurus
-website/.vitepress/cache
+site/dist
+site/.astro
+site/build
+site/.docusaurus
+site/.vitepress/cache
 dist
 dist-ssr
 *.local
@@ -40,8 +40,9 @@ xiaohongshu-video-script.md
 sign-apk.bat
 .playwright-mcp
 
-# 运行时数据根目录(仅本地保留, 不进版本追踪)
+# 运行时数据根目录(用户目录优先, 这里的回退位置与旧目录都不进版本追踪)
 data/
+.qzonearchive.fork/
 
 # Agent 工作目录(不作为项目产物)
 .agent/
