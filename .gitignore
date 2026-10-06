@@ -36,3 +36,11 @@ douyin-video-script.md
 xiaohongshu-video-script.md
 sign-apk.bat
 .playwright-mcp
+
+# Agent 工作目录(不作为项目产物)
+.agent/
+.agents/
+temp/
+
+# 版本文档(仅本地保留,不进入版本追踪)
+v*-*.md
