@@ -17,6 +17,9 @@ dist
 dist-ssr
 *.local
 
+# electron-builder 打包产物(安装包与解包目录)
+release/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -36,6 +39,9 @@ douyin-video-script.md
 xiaohongshu-video-script.md
 sign-apk.bat
 .playwright-mcp
+
+# 运行时数据根目录(仅本地保留, 不进版本追踪)
+data/
 
 # Agent 工作目录(不作为项目产物)
 .agent/

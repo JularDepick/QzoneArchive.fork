@@ -12,7 +12,7 @@
 
 ## 验证
 
-修改 Vue/Tauri 前端后运行 `npm run build`。修改文档站后运行 `npm --prefix website run build`。涉及 Rust 时还应运行 `cargo fmt --check` 和 `cargo check`。
+修改前端或主进程代码后运行 `npm run typecheck` 与 `npm run selftest`；涉及 Electron 外壳、桥接或命令注册时运行 `npm run smoke`。修改文档站后运行 `npm --prefix website run build`。
 
 ## Pull Request
 

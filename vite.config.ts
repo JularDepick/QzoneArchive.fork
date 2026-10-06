@@ -1,32 +1,26 @@
-import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
 import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
 
-// @ts-expect-error process is a nodejs global
-const host = process.env.TAURI_DEV_HOST;
+const rendererRoot = fileURLToPath(new URL("src/renderer", import.meta.url));
+const publicRoot = fileURLToPath(new URL("public", import.meta.url));
+const outputRoot = fileURLToPath(new URL("dist/renderer", import.meta.url));
 
-// https://vite.dev/config/
-export default defineConfig(async () => ({
+// 渲染进程(前端)构建配置: 开发服务器固定 1420 端口, 由 Electron 主进程通过 QZA_DEV_SERVER_URL 加载
+// 打包后以 file:// 加载, 因此 base 使用相对路径
+export default defineConfig({
+  root: rendererRoot,
+  base: "./",
+  publicDir: publicRoot,
   plugins: [vue()],
-
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
-    hmr: host
-      ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
-      : undefined,
-    watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
-    },
   },
-}));
+  build: {
+    outDir: outputRoot,
+    emptyOutDir: true,
+    target: "chrome120",
+  },
+});

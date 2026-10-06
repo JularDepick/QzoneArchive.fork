@@ -273,22 +273,22 @@
 | 设计细节 | 启用 | 记录可个性化修改但不影响核心功能的设计细节 | 设计细节发生变动时维护 |
 | 版本号索引 | 启用 | 记录当前版本号 | 版本号迭代后更新 |
 | 快捷命令 | 启用 | 记录 Agent 开发时使用的命令 | 按项目实际需求选择性补充 |
-| 辅助脚本 | 默认未启用扩展项 | 记录工作目录 `scripts?/` 内的辅助脚本 | 按需启用、按需撰写 |
+| 辅助脚本 | 启用 | 记录工作目录 `scripts?/` 内的辅助脚本 | 按需启用、按需撰写 |
 | GitHub Actions 工作流 | 默认未启用扩展项 | 记录 `.github/workflows/` 内的规范化工作流配置 | 用户明确指出有对应需求时才启用 |
 
 ### 概述
 
 - 项目名称: 空间归档(QzoneArchive),将 QQ 空间动态、照片、视频与互动记录归档到本地的跨平台工具
 - 项目简称: 无,项目各处统一使用 QzoneArchive,不要自行引入缩写
-- 技术形态: Tauri 2 原生外壳 + WebView 前端 + Rust 后端 + SQLite 本地库
-- 目标平台: Windows, macOS, Linux 桌面端,Android 与 iOS 移动端
+- 技术形态: Electron 44 原生外壳 + Chromium 渲染进程 + Node TypeScript 主进程 + SQLite 本地库
+- 目标平台: Windows, macOS, Linux 桌面端(重构后不再包含 Android 与 iOS 移动端)
 - 许可证: GPLv3,见根目录 `LICENSE`,未经用户明确要求不得改动
 - 核心能力: 完整归档(本人动态, 好友动态, 留言),断点续传,频率保护,互动还原,本地存储,HTML 导出,媒体时光轴,暗色模式,相册回收站恢复
 - 数据源原理: 归档基于 QQ 空间移动端互动列表接口 `https://mobile.qzone.qq.com/get_feeds`,该接口返回当前账号收到的全部互动通知(好友新动态, 点赞, 评论, 回复, 留言),程序从中提取原始动态内容并写入本地库
 - 能力边界: 从未被点赞或评论过的动态无法恢复,因为这类动态不会出现在互动列表中
-- 登录方式: 二维码登录(移动端扫码流程,全程不接触密码)与网页登录(仅桌面端,通过 WebView Cookie API 提取凭证)
-- 凭证安全: 登录凭证 Cookie 仅保存在 Rust 后端内存中,禁止写入日志、写入磁盘或经 Tauri 命令导出
-- 使用注意: 仅归档本人或已获授权账号的内容;归档过程中不要切换 QQ 客户端账号,否则有账号冻结风险;出现频繁限流提示时建议换个时间段继续,程序支持断点续传;空间视频签名有时效性,过期后需重新归档刷新;数据默认保存在应用数据目录,建议定期将重要资料额外备份
+- 登录方式: 二维码登录(移动端扫码流程,全程不接触密码)与网页登录(桌面端,通过 Electron 会话 cookie 接口提取凭证)
+- 凭证安全: 登录凭证只保存在主进程内存中,不写入日志,也不经 IPC 命令导出;为让依赖登录态的窗口(网页登录, 口令验证, QQ 空间)正常工作,凭证会写进 Electron 会话,会话数据位于数据根目录内的运行时目录
+- 使用注意: 仅归档本人或已获授权账号的内容;归档过程中不要切换 QQ 客户端账号,否则有账号冻结风险;出现频繁限流提示时建议换个时间段继续,程序支持断点续传;空间视频签名有时效性,过期后需重新归档刷新;数据保存在项目工作目录内的 `data/` 目录,建议定期将重要资料额外备份
 - 免责声明: 本软件为本地工具,与腾讯、QQ、QQ 空间及其关联主体不存在隶属、授权或合作关系,使用者应在合法授权范围内使用并自行承担使用风险
 - 开发约定: 分支从最新 `main` 切出并使用 `docs/`, `feat/`, `fix/`, `ci/` 前缀,不直接推送 `main`;提交采用 Conventional Commits,格式为 `type(scope): summary`,常用类型为 feat, fix, docs, refactor, test, ci, chore,摘要使用祈使语气且不超过 72 字符;其余贡献流程见 `CONTRIBUTING.md`
 - 相关文档: `README.md`(面向产品用户的项目说明), `CONTRIBUTING.md`(贡献流程), `LICENSE`(GPLv3 许可证全文)
@@ -304,18 +304,19 @@
 
 | 层次 | 技术 |
 |:---:|:---:|
-| 桌面与移动框架 | Tauri 2 |
+| 桌面外壳 | Electron 44 |
 | 前端框架 | Vue 3 + TypeScript |
 | 前端构建 | Vite 6 |
 | UI 组件库 | PrimeVue 4 + PrimeIcons |
 | 状态管理 | Pinia 3 |
 | 前端路由 | Vue Router 4 |
-| 后端语言 | Rust(edition 2021) |
-| 本地数据库 | SQLite(rusqlite,启用 bundled) |
-| HTTP 客户端 | reqwest(启用 rustls-tls) |
-| Tauri 插件 | http, os, dialog, fs, opener |
+| 主进程语言 | TypeScript(编译目标 ES2022,模块 NodeNext) |
+| 进程间通信 | Electron ipcMain 与 ipcRenderer,经 preload 的 contextBridge 暴露 |
+| 本地数据库 | SQLite,通过 Node 内置 `node:sqlite` 访问 |
+| HTTP 客户端 | Node 全局 fetch(undici) |
+| 本地文件协议 | 自定义 `qza://` 协议(protocol.handle),取代原 assetProtocol |
 | 文档站 | VitePress 1.6 |
-| 打包与分发 | NSIS, MSI, DMG, app, AppImage, deb, rpm, APK, 未签名 IPA, Nix |
+| 打包与分发 | electron-builder(阶段五接入,尚未启用) |
 | 许可证 | GPLv3 |
 
 > 当项目技术栈发生变化时需要自主更新并告知用户
@@ -324,18 +325,19 @@
 
 > 主要指前后端架构、服务架构。当项目架构发生变化时需要自主更新并告知用户
 
-- 总体结构: 单进程双端结构,Rust 后端承担全部网络请求、登录凭证管理与数据持久化,前端负责展示与交互
-- 前端分层: 页面 `src/views/`,通用组件 `src/components/`,外壳布局 `src/layouts/`,状态 `src/stores/`,后端命令封装与类型 `src/utils/`,全局样式 `src/styles/`
-- 后端分层: `src-tauri/src/lib.rs` 托管状态并注册 40 个 Tauri 命令,`src-tauri/src/qlogin.rs` 负责登录,`src-tauri/src/qzone.rs` 负责空间接口,`src-tauri/src/archive.rs` 负责归档引擎与数据库
+- 总体结构: 单进程外壳结构,Electron 主进程承担全部网络请求、登录凭证管理与数据持久化,渲染进程负责展示与交互,两者经 preload 暴露的 `window.qza` 桥接
+- 主进程分层: 入口与窗口 `src/main/index.ts`, `src/main/windows.ts`;命令路由 `src/main/ipc.ts`;命令实现 `src/main/commands/`;业务核心 `src/main/core/`;路径与落盘约束 `src/main/paths.ts`;文件协议 `src/main/protocol.ts`;HTTP 客户端 `src/main/net.ts`
+- 渲染进程分层: 页面 `src/renderer/views/`,通用组件 `src/renderer/components/`,外壳布局 `src/renderer/layouts/`,状态 `src/renderer/stores/`,后端命令封装与类型 `src/renderer/utils/`,全局样式 `src/renderer/styles/`
+- 桥接契约: `src/shared/bridge.d.ts` 定义 `window.qza` 的接口与共享类型,渲染进程统一从 `src/renderer/utils/ipc.ts` 调用后端
 - 前端路由: 哈希模式单页路由,共 7 个页面(概览, 归档内容, 联系人, 媒体, 任务, 相册回收站, 设置)
 - 数据表: `archive_feeds`(互动记录与原始 JSON), `archive_dynamics`(去重后的原动态,分类为 self, other, guestbook), `archive_checkpoints`(分页游标与断点统计), `archive_rate_limits`(限流窗口), `archive_skips`(异常页跳过与找回)
 - 归档主流程: 取第一页或从存档游标续传,解析互动列表并写入动态表,按需下载图片与视频,期间受频率保护约束,进度经 `ArchiveProgress` 回传前端
 - 频率保护: 10 分钟滑窗内最多 300 页,超限时以 `ARCHIVE_RATE_LIMIT:<时间戳>` 通知前端暂停并倒计时
 - 断点续传: 分页游标持久化,游标超过 600 秒视为过期,过期后回第一页重新校验,依靠唯一索引去重
 - 异常跳过: 请求失败的页记录游标与偏移,向前探测可恢复位置(最大推进 4096),事后支持单条或批量重试找回
-- 媒体缓存: 图片按内容哈希落盘并限制并发,视频按需缓存,依赖空间侧带时效的播放地址
-- 权限边界: `src-tauri/capabilities/default.json` 仅放行 QQ 空间接口与图片 CDN 域名
-- 数据目录: 归档库与图片位于用户数据目录,http 插件的 cookie 缓存位于用户缓存目录(实际路径见设计细节)
+- 媒体缓存: 图片落盘到数据根目录并限制并发,视频按需缓存,依赖空间侧带时效的播放地址
+- 权限边界: 主进程是唯一出口,渲染进程不直接发起网络请求或读写本地文件,全部能力经 `src/main/commands/` 白名单式放行
+- 数据目录: 归档库, 图片, 视频缓存与 Chromium 运行时数据全部位于工作目录内的 `data/` 子目录(实际路径见设计细节),不写入用户目录
 
 ### 目录结构
 
@@ -343,50 +345,73 @@
 
 ```
 QzoneArchive/
-├── .gitcode/
-│   └── workflows/
-│       └── ci.yml                        # GitCode 平台构建配置
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.yml                # 缺陷报告模板
 │   │   └── config.yml                    # Issue 模板配置
 │   ├── pull_request_template.md          # Pull Request 模板
 │   └── workflows/
-│       ├── ci-build.yml                  # 多平台构建工作流
 │       ├── docs.yml                      # 文档站部署工作流
-│       ├── quality.yml                   # 前端与文档质量检查工作流
-│       └── release.yml                   # 发行版打包与发布工作流
+│       └── quality.yml                   # 前端质量检查工作流
 ├── .vscode/
 │   └── extensions.json                   # 推荐编辑器扩展
-├── nix/
-│   └── qzonearchive.nix                  # NixOS 打包描述
 ├── public/
 │   ├── runtime/                          # README 页面截图
 │   ├── sponsor/                          # 赞助二维码图片
 │   ├── app-icon.png                      # 应用图标
 │   ├── product-hero.png                  # 展示图
-│   ├── tauri.svg                         # Tauri 图标
 │   └── vite.svg                          # Vite 图标
-├── src/                                  # 前端源码(结构见下)
-├── src-tauri/                            # 后端与 Tauri 配置(结构见下)
+├── scripts/
+│   ├── dev.ts                            # 开发启动脚本(拉起 Vite, 编译主进程, 启动 Electron)
+│   ├── electronArgs.ts                   # Electron 启动参数(含沙箱规避)
+│   ├── selftest.ts                       # 核心逻辑自检脚本
+│   └── smoke.ts                          # 启动自检脚本
+├── src/                                  # 全部功能源码(结构见下)
 ├── website/                              # 文档站(结构见下)
 ├── .gitignore                            # git 忽略规则
 ├── AGENTS.md                             # Agent 开发协作守则
 ├── CONTRIBUTING.md                       # 贡献指南
 ├── LICENSE                               # GPLv3 许可证
 ├── README.md                             # 项目说明
-├── flake.nix                             # Nix flake 入口
-├── index.html                            # WebView 页面入口
-├── package.json                          # 前端依赖与脚本
-├── package-lock.json                     # 前端依赖锁定
-├── release.jks                           # Android 签名密钥库
-├── tsconfig.json                         # TypeScript 主配置
-├── tsconfig.node.json                    # TypeScript 构建侧配置
+├── package.json                          # 依赖与脚本入口
+├── package-lock.json                     # 依赖锁定
+├── tsconfig.json                         # 渲染进程 TypeScript 配置
+├── tsconfig.electron.json                # 主进程与预加载脚本编译配置
+├── tsconfig.node.json                    # 构建侧 TypeScript 配置
 └── vite.config.ts                        # Vite 配置
 ```
 
 ```
 src/
+├── main/                                 # Electron 主进程(Node 侧源码)
+│   ├── commands/                         # 命令实现,按域分文件
+│   │   ├── app.ts                        # 版本, 平台, 退出, 窗口, 数据目录
+│   │   ├── archiveEngine.ts              # 归档任务, 进度, 取消, 异常跳过重试
+│   │   ├── archiveMedia.ts               # 媒体时光轴, 图片与视频缓存, HTML 导出
+│   │   ├── archiveQuery.ts               # 归档浏览, 统计, 联系人, 删除与清空
+│   │   ├── browser.ts                    # QQ 空间窗口与 Cookie 同步占位
+│   │   ├── files.ts                      # 保存对话框, 写文件, 打开外链
+│   │   ├── login.ts                      # 二维码登录与网页登录
+│   │   ├── net.ts                        # 主进程代发 HTTP
+│   │   ├── qzoneFeed.ts                  # 互动列表直连
+│   │   └── recycle.ts                    # 相册回收站与相册管理
+│   ├── core/                             # 业务核心(纯 Node,不依赖 electron)
+│   ├── index.ts                          # 主进程入口
+│   ├── ipc.ts                            # 命令路由与注册表
+│   ├── net.ts                            # HTTP 客户端与 GBK 兜底解码
+│   ├── paths.ts                          # 数据根目录解析与越界校验
+│   ├── protocol.ts                       # qza:// 本地文件协议
+│   ├── smoke.ts                          # 启动自检
+│   └── windows.ts                        # 窗口创建与管理
+├── preload/
+│   └── index.cts                         # 桥接注入(编译为 CommonJS)
+├── renderer/                             # Vue 前端(结构见下)
+└── shared/
+    └── bridge.d.ts                       # 桥接契约与共享类型
+```
+
+```
+src/renderer/
 ├── assets/                               # 前端静态资源
 │   ├── sidebar-toggle.png                # 侧边栏折叠图标
 │   └── vue.svg                           # Vue 图标
@@ -409,6 +434,7 @@ src/
 │   ├── appGuards.ts                      # 快捷键与手势屏蔽
 │   ├── appSettings.ts                    # 归档间隔设置读写
 │   ├── archiveImage.ts                   # 远程图片加载
+│   ├── ipc.ts                            # 桥接封装,取代原 @tauri-apps/*
 │   ├── qlogin.ts                         # 登录命令封装
 │   ├── qzone.ts                          # 后端命令封装与类型定义
 │   └── qzoneText.ts                      # 空间文本解析
@@ -422,31 +448,9 @@ src/
 │   ├── SettingsView.vue                  # 设置
 │   └── TasksView.vue                     # 归档任务
 ├── App.vue                               # 根组件
+├── index.html                            # 渲染进程页面入口
 ├── main.ts                               # 前端入口
 └── vite-env.d.ts                         # Vite 类型声明
-```
-
-```
-src-tauri/
-├── capabilities/
-│   └── default.json                      # 主窗口权限与 HTTP 域名白名单
-├── gen/
-│   └── android/                          # Tauri 生成的 Android 工程(已纳入版本管理)
-├── icons/                                # 桌面与移动端图标集(含 ios/ 子目录)
-├── src/
-│   ├── archive.rs                        # 归档引擎、SQLite、HTML 导出、媒体缓存
-│   ├── lib.rs                            # 入口注册与 Tauri 命令清单
-│   ├── main.rs                           # 二进制入口
-│   ├── qlogin.rs                         # QQ 登录(二维码与网页)
-│   └── qzone.rs                          # QQ 空间接口客户端
-├── .gitignore                            # 后端忽略规则
-├── build.rs                              # Tauri 构建脚本
-├── Cargo.lock                            # Rust 依赖锁定
-├── Cargo.toml                            # Rust 依赖与包定义
-├── Info.ios.plist                        # iOS 配置
-├── tauri.android.conf.json               # Android 平台覆盖配置
-├── tauri.conf.json                       # 主配置(标识、窗口、打包)
-└── tauri.ios.conf.json                   # iOS 平台覆盖配置
 ```
 
 ```
@@ -484,18 +488,16 @@ website/
 
 | 配置文件 | 功能性说明 |
 |:---:|:---:|
-| `package.json` | 前端依赖与脚本入口,含 `allowScripts` 放行 esbuild 安装脚本 |
-| `vite.config.ts` | Vite 开发服务器固定 1420 端口,并忽略监听 `src-tauri` |
-| `tsconfig.json` | TypeScript 主编译配置 |
+| `package.json` | 依赖与脚本入口,含 `main` 指向主进程产物与 `allowScripts` 放行 electron, esbuild 安装脚本 |
+| `vite.config.ts` | 渲染进程构建配置,root 指向 `src/renderer`,产物输出到 `dist/renderer`,开发端口 1420 |
+| `tsconfig.json` | 渲染进程 TypeScript 配置 |
+| `tsconfig.electron.json` | 主进程与预加载脚本编译配置,产物输出到 `dist/electron` |
 | `tsconfig.node.json` | 构建侧 TypeScript 配置 |
-| `index.html` | WebView 页面入口 |
-| `src-tauri/tauri.conf.json` | 应用标识、窗口尺寸、资源协议范围、打包目标与平台定制 |
-| `src-tauri/tauri.android.conf.json` | Android 平台覆盖配置(产物名 QArchive) |
-| `src-tauri/tauri.ios.conf.json` | iOS 平台覆盖配置(二进制名 qzonearchive) |
-| `src-tauri/Cargo.toml` | Rust 依赖与包定义(http 插件启用 unsafe-headers) |
-| `src-tauri/build.rs` | Tauri 构建脚本入口 |
-| `src-tauri/capabilities/default.json` | 主窗口权限与 HTTP 域名白名单 |
-| `src/utils/appSettings.ts` | 前端归档间隔设置的读写与取值范围 |
+| `src/renderer/index.html` | 渲染进程页面入口 |
+| `src/shared/bridge.d.ts` | `window.qza` 桥接契约与共享类型 |
+| `src/main/paths.ts` | 数据根目录解析, 越界校验与 Electron 落盘位置重定向 |
+| `src/main/ipc.ts` | 命令路由与注册表 |
+| `src/renderer/utils/appSettings.ts` | 前端归档间隔设置的读写与取值范围 |
 | `website/.vitepress/config.ts` | 文档站导航、侧边栏与本地搜索配置 |
 
 ### 设计细节
@@ -512,55 +514,59 @@ website/
 > 当项目设计细节具有全局常量/宏/独立代码文件的定义形式时,需要在本段落具体内容末尾添加索引性说明(文件路径、行数、宏/量名称)。
 > 特别地,当项目状态中的设计细节具体值与本段落设计细节值发生冲突时,需要向用户报告请求决策,不要自行决定
 
-- 产物名称: 桌面端 `QzoneArchive`,Android 产物名 `QArchive`,iOS 二进制名 `qzonearchive`
-- 应用标识: `top.ehre.qzonearchive`
-- 用户数据目录(实际值): `%APPDATA%\top.ehre.qzonearchive\`,内含归档库与图片目录
-- 用户缓存目录(实际值): `%LOCALAPPDATA%\top.ehre.qzonearchive\`,由 http 插件存放 cookie 缓存文件
+- 产物名称: 桌面端 `QzoneArchive`(electron-builder 产物名在阶段五确定)
+- 应用标识: `top.ehre.qzonearchive`(仅用于渲染进程与打包元数据,不再决定数据目录)
+- 数据根目录(实际值): `<工作目录>/data/`,内含归档库, 图片, 视频缓存, 日志与 Chromium 运行时数据;可用环境变量 `QZA_DATA_DIR` 覆盖,但覆盖值必须仍在工作目录内,越界直接报错
 - 默认窗口尺寸: 1180x760,最小 760x560
+- QQ 空间窗口尺寸: 1000x720,最小 480x500
 - 开发监听地址与端口: `localhost:1420`
-- 归档请求间隔: 默认 3000 毫秒,前端限制 2000 至 30000 毫秒,后端同步夹取
+- 归档请求间隔: 默认 3000 毫秒,前端限制 2000 至 30000 毫秒,主进程同步夹取
 - 频率保护: 10 分钟窗口内最多 300 页
 - 分页游标有效期: 600 秒
 - 异常跳过最大偏移推进: 4096
 - 图片下载并发上限: 4
 - 动态接口重试次数: 6
+- 动态接口主进程超时: 30000 毫秒
 - 数据库文件名: `qzone-archive.sqlite3`
 - 图片归档目录名: `images`
+- 视频缓存目录名: `videos`
+- 本地文件协议: `qza://local/<url 编码后的绝对路径>`,只允许读取数据根目录内的文件
 
 索引性说明(文件路径, 行数, 宏/量名称):
 
 | 设计细节 | 位置 | 名称 |
 |:---:|:---:|:---:|
-| 应用标识 | `src-tauri/tauri.conf.json:5` | `identifier` |
-| 默认窗口尺寸 | `src-tauri/tauri.conf.json:17-20` | `width` `height` `minWidth` `minHeight` |
-| 开发监听端口 | `vite.config.ts:17` | `server.port` |
-| 归档请求间隔前端范围 | `src/utils/appSettings.ts:2-3` | `MIN_ARCHIVE_INTERVAL` `DEFAULT_ARCHIVE_INTERVAL` |
-| 归档请求间隔后端夹取 | `src-tauri/src/archive.rs:1429` | `interval_ms` |
-| 频率保护窗口与页数上限 | `src-tauri/src/archive.rs:615-616` | `ARCHIVE_RATE_WINDOW_SECONDS` `ARCHIVE_RATE_PAGE_LIMIT` |
-| 分页游标有效期 | `src-tauri/src/archive.rs:617` | `ARCHIVE_CURSOR_MAX_AGE_SECONDS` |
-| 异常跳过最大偏移推进 | `src-tauri/src/archive.rs:618` | `ARCHIVE_SKIP_MAX_OFFSET_ADVANCE` |
-| 数据库文件名 | `src-tauri/src/archive.rs:259` | `qzone-archive.sqlite3` |
-| 图片归档目录名 | `src-tauri/src/archive.rs:1060` | `images` |
-| 图片下载并发上限 | `src-tauri/src/archive.rs:73` | `Semaphore::new(4)` |
-| 动态接口重试次数 | `src-tauri/src/qzone.rs:14` | `FEED_RESPONSE_ATTEMPTS` |
-| 登录应用标识与移动端 UA | `src-tauri/src/qlogin.rs:19-21` | `APP_ID` `DAID` `MOBILE_USER_AGENTS` |
+| 数据根目录名与库文件名 | `src/main/paths.ts:13-14` | `DATA_DIR_NAME` `DATABASE_FILE_NAME` |
+| 图片与视频目录名 | `src/main/paths.ts:15-16` | `IMAGE_DIR_NAME` `VIDEO_DIR_NAME` |
+| 默认窗口尺寸与 QQ 空间窗口尺寸 | `src/main/windows.ts:9-10` | `MAIN_WINDOW_SIZE` `QZONE_WINDOW_SIZE` |
+| 本地文件协议 | `src/main/protocol.ts:12-13` | `FILE_SCHEME` `FILE_HOST` |
+| 开发监听端口 | `vite.config.ts` | `server.port` |
+| 主进程 HTTP 超时 | `src/main/net.ts:6` | `REQUEST_TIMEOUT_MS` |
+| IPC 通道名 | `src/main/ipc.ts:8` | `IPC_CHANNEL` |
+| 归档请求间隔前端范围 | `src/renderer/utils/appSettings.ts:2-3` | `MIN_ARCHIVE_INTERVAL` `DEFAULT_ARCHIVE_INTERVAL` |
+| 归档引擎常量(限流窗口, 页数上限, 游标有效期, 跳过推进上限, 请求间隔, 重试次数, 下载并发, 单页条数) | `src/main/core/constants.ts` | `ARCHIVE_RATE_WINDOW_SECONDS` `ARCHIVE_RATE_PAGE_LIMIT` `ARCHIVE_CURSOR_MAX_AGE_SECONDS` `ARCHIVE_SKIP_MAX_OFFSET_ADVANCE` `ARCHIVE_INTERVAL_MIN_MS` `ARCHIVE_INTERVAL_MAX_MS` `ARCHIVE_INTERVAL_DEFAULT_MS` `FEED_RESPONSE_ATTEMPTS` `FEED_RETRY_BASE_DELAY_MS` `FIRST_PAGE_RETRY_ATTEMPTS` `FIRST_PAGE_RETRY_DELAYS_MS` `IMAGE_DOWNLOAD_CONCURRENCY` `IMAGE_MAX_BYTES` `IMAGE_REQUEST_TIMEOUT_MS` `VIDEO_REQUEST_TIMEOUT_MS` `FEED_PAGE_SIZE_LIMIT` |
+| 归档数据库与状态层 | `src/main/core/archiveDb.ts` | `openArchiveDatabase` `loadCheckpoint` `reserveArchivePage` `recordArchiveSkip` 等 |
+| 分页游标解析与推进 | `src/main/core/feedCursor.ts` | `parseFeedCursor` `advanceFeedCursor` `skipProbeOffsets` |
+| 归档解析与落库 | `src/main/core/archiveParser.ts` | `parseFeed` `commentFromValues` `mergeComments` `pictureUrls` `videoUrls` `videoCoverUrl` `validateCategory` |
+| 归档引擎主流程 | `src/main/core/archiveEngine.ts` | `startFeedArchive` `getArchiveProgress` `cancelFeedArchive` `archivePageDelayMs` `conciseArchiveError` |
+| 归档浏览查询 | `src/main/core/archiveQuery.ts` | `listArchivedFeeds` `countArchivedFeeds` `getArchivedFeed` `getArchiveOverview` `getInteractionRanking` `deleteArchivedFeeds` `clearArchivedFeeds` |
+| 空间接口客户端 | `src/main/core/qzoneClient.ts` | `fetchFirstFeeds` `fetchMoreFeeds` `fetchFeedsOnce` `feedErrorCanSkip` |
+| 登录纯函数与常量 | `src/main/core/loginPrimitives.ts` | `ptqrToken` `bkn` `mergeSetCookies` `MOBILE_USER_AGENTS` |
+| 登录应用标识与移动端 UA | `src/main/core/loginPrimitives.ts` | `APP_ID` `DAID` `MOBILE_USER_AGENTS` |
 
-> 模板默认的用户目录形如 `~/<项目名称>/`,与本项目实际值不一致,本项目实际目录由应用标识拼装。如需按模板习惯调整,需修改 `src-tauri/tauri.conf.json` 的 `identifier`,并先向用户报告请求决策
+> 模板默认的用户目录形如 `~/<项目名称>/`,本项目按用户明确要求改为工作目录内的 `data/`,不写用户目录。如需回退到模板习惯,需同时调整 `src/main/paths.ts` 的解析逻辑并先向用户报告请求决策
 
 ### 版本号索引
 
-- 当前版本: `1.0.3`
+- 当前版本: `2.0.0`
 
 | 文件 | 行数 | 内容 |
 |:---:|:---:|:---:|
-| `package.json` | 4 | `"version": "1.0.3"` |
-| `package-lock.json` | 3 | `"version": "1.0.3"` |
-| `src-tauri/Cargo.toml` | 3 | `version = "1.0.3"` |
-| `src-tauri/Cargo.lock` | 2890 | `qzonearchive` 包版本 |
-| `src-tauri/tauri.conf.json` | 4 | `"version": "1.0.3"` |
-| `nix/qzonearchive.nix` | 11, 21 | 包版本与 npm 依赖派生名 |
+| `package.json` | 4 | `"version": "2.0.0"` |
+| `package-lock.json` | 3 | `"version": "2.0.0"` |
 
 > 版本号中 `x` 表示十进制数,不限制位数,无前导 0
+> 主进程的 `app_version` 命令读取的是 `package.json` 的 `version` 字段
 > 文档站 `website/package.json:4` 为独立版本 `1.0.0`,与主项目版本号无绑定关系
 > 未经用户明确指定不得迭代版本号
 
@@ -569,34 +575,37 @@ website/
 > 主要指 Agent 开发时使用的命令,如安装依赖、热重载、构建产物、清理残留;需要按照项目实际需求选择性补充,注意适配开发环境的命令行类型
 
 ```
-:: 运行前置: Rust 1.77+, Node.js 20+, Windows 需 WebView2, Android 需 Android Studio 与 Android SDK, NDK
+:: 运行前置: Node.js 20+, Windows 需 WebView2 运行时
 
-:: 安装前端依赖(在工作目录根执行)
+:: 安装依赖(在工作目录根执行,Electron 二进制会随 postinstall 下载)
 npm install
 
-:: 启动桌面开发环境(同时拉起 Vite 与 Rust 后端,随后打开原生窗口)
-npm run tauri dev
-
-:: 仅启动前端开发服务器(缺少 Tauri 运行时,页面中的 Tauri 接口不可用)
+:: 启动开发环境(拉起 Vite 开发服务器,编译主进程,随后打开 Electron 窗口)
 npm run dev
 
-:: 前端类型检查与构建(等价于 vue-tsc --noEmit 后执行 vite build)
+:: 仅启动渲染进程开发服务器(没有 Electron,页面中的后端命令不可用)
+npm run dev:renderer
+
+:: 编译主进程与预加载脚本(输出到 dist/electron)
+npm run build:electron
+
+:: 渲染进程类型检查与构建(输出到 dist/renderer)
+npm run build:renderer
+
+:: 完整构建(主进程加渲染进程)
 npm run build
 
-:: Windows 打包(仅 NSIS)
-npm run tauri:build:windows
+:: 类型检查(渲染进程为主进程)
+npm run typecheck
 
-:: Windows 打包(NSIS 与 MSI)
-npm run tauri:build:windows:all
+:: 启动自检(启动 Electron,输出运行时报告后自动退出,报告写入 data/smoke-report.json)
+npm run smoke
 
-:: Android 开发与打包
-npm run tauri android dev
-npm run tauri android build
+:: 核心逻辑自检(游标解析与归档数据库状态层,不需要 Electron)
+npm run selftest
 
-:: Rust 格式检查、类型检查与构建(在 src-tauri 目录下执行)
-cargo fmt --check
-cargo check
-cargo build
+:: 启动已构建的应用(需先执行 npm run build)
+npm start
 
 :: 文档站依赖安装与构建(在工作目录根执行)
 npm --prefix website install
@@ -604,3 +613,18 @@ npm --prefix website run build
 ```
 
 > 执行环境命令优先使用 cmd 命令行,需要进入 cmd 时在 PowerShell 中执行 `cmd ...` 接上目标命令
+
+### 辅助脚本
+
+> 工作目录 `scripts/` 内的辅助脚本,均为开发期使用,不参与打包
+
+| 脚本 | 用途 | 调用方式 |
+|:---:|:---:|:---:|
+| `scripts/dev.ts` | 拉起 Vite 开发服务器,编译主进程与预加载脚本,启动 Electron | `npm run dev` |
+| `scripts/electronArgs.ts` | 生成 Electron 启动参数,本机工作目录带 Low 完整性标签时默认禁用 Chromium 沙箱 | 被 dev 与 smoke 脚本引用 |
+| `scripts/smoke.ts` | 以自检模式启动 Electron,检查桥接注入,页面挂载,数据目录,写文件与一批真实命令调用 | `npm run smoke` |
+| `scripts/selftest.ts` | 在普通 Node 下自检游标解析, 归档数据库状态层与查询层字段契约 | `npm run selftest` |
+
+> 三个脚本都由系统 Node 直接运行 TypeScript,依赖 Node 的类型剥离能力,不需要额外构建步骤
+> 自检报告与自检临时数据库都写在数据根目录 `data/` 内,不落到工作目录之外
+> `scripts/selftest.ts` 导入的是 `dist/electron/main/core/` 下的编译产物,因此需要先编译主进程

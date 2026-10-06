@@ -1,26 +1,28 @@
 {
   "name": "qzonearchive",
   "private": true,
-  "version": "1.0.3",
+  "version": "2.0.0",
+  "description": "将 QQ 空间动态, 照片, 视频与互动记录安全归档到本地。",
+  "homepage": "https://github.com/Gaoshu705/QzoneArchive",
+  "author": "Ehre",
   "type": "module",
+  "main": "dist/electron/main/index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:build:windows": "tauri build --bundles nsis",
-    "tauri:build:windows:all": "tauri build --bundles nsis,msi",
-    "tauri:build:nsis": "tauri build --bundles nsis",
-    "tauri:build:msi": "tauri build --bundles msi"
+    "dev": "node scripts/dev.ts",
+    "dev:renderer": "vite",
+    "build:renderer": "vue-tsc --noEmit && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "npm run build:electron && npm run build:renderer",
+    "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "start": "electron .",
+    "smoke": "npm run build && node scripts/smoke.ts",
+    "selftest": "npm run build:electron && node scripts/selftest.ts",
+    "package:win": "npm run build && electron-builder --win",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@primevue/themes": "^4.5.3",
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-fs": "^2.5.1",
-    "@tauri-apps/plugin-http": "^2.5.9",
-    "@tauri-apps/plugin-opener": "^2",
-    "@tauri-apps/plugin-os": "^2.3.2",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",
@@ -28,13 +30,16 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.6.4",
     "@vitejs/plugin-vue": "^5.2.1",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
     "vue-tsc": "^2.1.10"
   },
   "allowScripts": {
+    "electron@44.5.1": true,
     "esbuild@0.25.12": true
   }
 }

@@ -1,0 +1,65 @@
+# electron-builder 打包配置
+#
+# 只分发构建产物与 package.json: 主进程与预加载脚本仅依赖 electron 与 Node 内置模块,
+# 渲染进程依赖已由 Vite 打进 dist/renderer, 因此不需要随包分发 node_modules。
+# 产物输出到 release/, 该目录不进入版本追踪。
+appId: top.ehre.qzonearchive
+productName: QzoneArchive
+copyright: Copyright © 2026 Ehre
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/electron/**/*
+  - dist/renderer/**/*
+  - package.json
+  - "!node_modules/**/*"
+
+asar: true
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+# 当前用户安装: perMachine 为 false 且不允许提权, 安装向导里的 "所有用户" 选项被禁用,
+# 因此永远不需要管理员权限, 应用落到 %LOCALAPPDATA%\Programs\QzoneArchive。
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 空间归档
+  uninstallDisplayName: 空间归档
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  installerLanguages:
+    - zh_CN
+    - en_US
+  language: "2052"
+  displayLanguageSelector: false
+  artifactName: ${productName}-${version}-win-${arch}-setup.${ext}
+
+mac:
+  icon: build/icon.icns
+  category: public.app-category.utilities
+  target:
+    - dmg
+    - zip
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+
+linux:
+  icon: build/icons
+  category: Utility
+  maintainer: Ehre
+  target:
+    - AppImage
+    - deb
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}

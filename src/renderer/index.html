@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      内容安全策略: 只允许自身资源, 归档媒体经 qza:// 协议读取, 远程图片与头像经 https 加载
+      开发模式下 connect-src 需要放行 Vite 的热更新连接(ws:)与开发服务器(http://localhost:1420)
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: qza: https:; media-src 'self' blob: qza: https:; font-src 'self' data:; connect-src 'self' qza: ws: wss: http://localhost:1420; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>空间归档</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

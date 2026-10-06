@@ -5,8 +5,8 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 
 # 空间归档 (QzoneArchive)
 
-[![Rust](https://img.shields.io/badge/Rust-1.77%2B-orange)](https://www.rust-lang.org/)
-[![Tauri](https://img.shields.io/badge/Tauri-2.0-blue)](https://v2.tauri.app/)
+[![Electron](https://img.shields.io/badge/Electron-44-blue)](https://www.electronjs.org/)
+[![Node](https://img.shields.io/badge/Node-20%2B-green)](https://nodejs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.5-green)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
@@ -52,71 +52,99 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 
 | 层 | 技术 |
 |---|------|
-| 桌面框架 | Tauri 2 |
+| 桌面外壳 | Electron 44 |
 | 前端 | Vue 3 + TypeScript + Vite |
 | UI 组件 | PrimeVue 4 |
 | 状态管理 | Pinia |
-| 后端数据库 | SQLite (rusqlite) |
-| HTTP 客户端 | reqwest (rustls-tls) |
-| 打包 | NSIS (Windows) / Android APK |
+| 本地数据库 | SQLite (node:sqlite) |
+| HTTP 客户端 | Node 全局 fetch (undici) |
+| 打包 | electron-builder |
 
 ## 开发
 
 ### 前置要求
 
-- [Rust](https://www.rust-lang.org/tools/install) 1.77+
 - [Node.js](https://nodejs.org/) 20+
 - Windows: [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/)（Windows 10+ 自带）
-- Android: [Android Studio](https://developer.android.com/studio) + Android SDK + NDK
 
 ### 启动开发环境
 
 ```bash
-# 安装前端依赖
+# 安装依赖（会同时下载 Electron 二进制）
 npm install
 
-# 启动开发服务器（桌面端）
-npm run tauri dev
+# 启动开发环境（拉起 Vite 开发服务器、编译主进程并打开窗口）
+npm run dev
 
-# Android 构建
-npm run tauri android dev
+# 仅启动前端开发服务器
+npm run dev:renderer
 ```
 
 ### 构建
 
 ```bash
-# Windows NSIS 安装包
-npm run tauri:build:windows
+# 类型检查(渲染进程 + 主进程)
+npm run typecheck
 
-# Windows NSIS + MSI
-npm run tauri:build:windows:all
+# 完整构建(主进程 + 渲染进程)
+npm run build
 
-# Android APK
-npm run tauri android build
+# 核心逻辑自检(游标解析与归档数据库状态层)
+npm run selftest
+
+# 启动自检(启动应用, 检查桥接, 页面挂载与一批真实命令调用)
+npm run smoke
 ```
+
+### 打包
+
+打包由 electron-builder 完成, 配置在 `electron-builder.yml`, 产物输出到 `release/`。三个脚本都会先执行一次完整构建:
+
+```bash
+# Windows: NSIS 安装包, 当前用户安装, 不需要管理员权限
+npm run package:win
+
+# macOS: 磁盘映像与压缩包
+npm run package:mac
+
+# Linux: 通用可执行文件与 deb 包
+npm run package:linux
+```
+
+打包只包含 `dist/electron/`, `dist/renderer/` 与 `package.json`, 内容以 asar 归档在 `resources/app.asar` 内, 不携带 `node_modules`。应用图标放在 `build/`, 安装向导与各平台设置见 `electron-builder.yml`。
+
+| 平台 | 产物 | 说明 |
+|:---:|:---:|:---:|
+| Windows | `QzoneArchive-2.0.0-win-x64-setup.exe` | NSIS 安装包, 向导语言包含简体中文与英文 |
+| macOS | `QzoneArchive-2.0.0-mac-<架构>.dmg` `QzoneArchive-2.0.0-mac-<架构>.zip` | 架构取打包主机的架构 |
+| Linux | `QzoneArchive-2.0.0-linux-<架构>.AppImage` `QzoneArchive-2.0.0-linux-<架构>.deb` | 分类标记为 Utility |
+
+同一目录下的 `release/win-unpacked/`, 即 macOS 的 `release/mac/` 或 `release/mac-arm64/`, Linux 的 `release/linux-unpacked/`, 是不需要安装即可直接运行的应用目录, 方便本地验证。
+
+> 打包产物按设计把数据写在可执行文件所在目录的 `data/` 子目录。安装版为 `%LOCALAPPDATA%\Programs\QzoneArchive\data`, 解包版为 `release/win-unpacked/data`。
 
 ### 项目结构
 
 ```
-├── src/                    # Vue 前端
-│   ├── views/              # 页面组件
-│   │   ├── DashboardView   # 概览（统计 + 互动排行）
-│   │   ├── ArchivesView    # 归档内容（分类浏览、搜索、导出）
-│   │   ├── MediaView       # 媒体时光轴
-│   │   ├── TasksView       # 归档任务
-│   │   └── SettingsView    # 设置
-│   ├── components/         # 通用组件
-│   ├── stores/             # Pinia 状态管理
-│   ├── utils/              # 工具函数与类型
-│   └── layouts/            # 布局组件
-├── src-tauri/              # Rust 后端
-│   └── src/
-│       ├── main.rs         # 入口
-│       ├── lib.rs          # Tauri 命令注册
-│       ├── qlogin.rs       # QQ 登录（二维码 + 网页）
-│       ├── qzone.rs        # QQ 空间接口
-│       └── archive.rs      # 归档引擎 + 数据库
-└── src-tauri/capabilities/ # Tauri 权限配置
+├── build/                  # 打包资源(应用图标)
+├── electron-builder.yml    # 打包配置
+├── scripts/                # 开发与自检脚本
+├── src/
+│   ├── main/               # Electron 主进程
+│   │   ├── commands/       # 命令实现（按域分文件）
+│   │   ├── core/           # 业务核心（纯 Node，不依赖 Electron）
+│   │   ├── index.ts        # 主进程入口
+│   │   ├── ipc.ts          # 命令路由
+│   │   ├── paths.ts        # 数据根目录解析与越界校验
+│   │   └── protocol.ts     # qza:// 本地文件协议
+│   ├── preload/            # 桥接注入
+│   ├── renderer/           # Vue 前端
+│   │   ├── views/          # 页面组件
+│   │   ├── components/     # 通用组件
+│   │   ├── stores/         # Pinia 状态管理
+│   │   └── utils/          # 工具函数与后端命令封装
+│   └── shared/             # 桥接契约与共享类型
+└── website/                # 文档站
 ```
 
 ## 原理
@@ -132,7 +160,7 @@ npm run tauri android build
 - **二维码登录**：调用 QQ 空间移动端扫码登录流程，全程不接触密码
 - **网页登录**（桌面端）：打开独立窗口加载 QQ 登录页，通过 WebView Cookie API 提取登录凭证
 
-登录凭证（Cookie）仅存储在 Rust 后端内存中，不会写入控制台或日志。
+登录凭证（Cookie）只保存在主进程内存中，不会写入控制台或日志，也不会经命令接口导出给界面层；为让依赖登录态的窗口（网页登录、独立密码验证、QQ 空间）正常工作，凭证会写进应用会话，会话数据同样位于工作目录内的 `data/` 目录。
 
 ## 注意事项
 
@@ -140,7 +168,7 @@ npm run tauri android build
 - 归档过程中不要切换 QQ 客户端账号，否则可能有冻结风险
 - 出现频繁提示时建议换个时间段继续，程序支持断点续传
 - QQ 的视频签名有时效性，过期后需要重新归档以更新视频地址
-- 数据默认保存在应用数据目录，建议定期将重要资料额外备份
+- 数据保存在项目工作目录内的 `data/` 目录，建议定期将重要资料额外备份
 
 ## 免责声明
 
@@ -148,7 +176,7 @@ npm run tauri android build
 
 ## 赞赏
 
-如果这个项目对你有帮助，欢迎请开发者喝杯咖啡 ☕
+如果这个项目对你有帮助，欢迎请开发者喝杯咖啡
 
 | 微信 | 支付宝 |
 |------|--------|
