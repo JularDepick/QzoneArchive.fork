@@ -10,19 +10,18 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 [![Vue](https://img.shields.io/badge/Vue-3.5-green)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-将 QQ 空间动态、照片、视频与互动记录安全归档到本地的桌面 / 移动端工具。
-
-[**详细使用教程**](https://www.bilibili.com/video/BV1p7MZ6xEfk) 
-[**网盘下载地址**](https://pan.quark.cn/s/69baf8c8aadc)
+将 QQ 空间动态、照片、视频与互动记录安全归档到本地的桌面工具。
 
 > [!CAUTION]
 > **近期出现因使用非仓库来源软件而导致账号信息泄露的情况，请务必仔细甄别软件来源。除本仓库发布的内容外，任何其他来源的程序均不可信，请勿下载或使用。**
 
-<a href="https://www.star-history.com/?repos=Gaoshu705%2FQzoneArchive&type=date&legend=top-left">
+> 本项目 fork 自 https://github.com/Gaoshu705/QzoneArchive
+
+<a href="https://www.star-history.com/#JularDepick/QzoneArchive.fork&date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Gaoshu705/QzoneArchive&type=date&theme=dark&legend=top-left&sealed_token=VVJL1S9RMakv50gmYM8C74miiTpiN4O14StqOWLkzBbJNM_ksdUxftRGOvO_1_fnDnEscvd9qj6qqnS-9dOYZkIrJhVYFxgmxN_0xduxtjm1eICUxBdfIQ" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Gaoshu705/QzoneArchive&type=date&legend=top-left&sealed_token=VVJL1S9RMakv50gmYM8C74miiTpiN4O14StqOWLkzBbJNM_ksdUxftRGOvO_1_fnDnEscvd9qj6qqnS-9dOYZkIrJhVYFxgmxN_0xduxtjm1eICUxBdfIQ" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Gaoshu705/QzoneArchive&type=date&legend=top-left&sealed_token=VVJL1S9RMakv50gmYM8C74miiTpiN4O14StqOWLkzBbJNM_ksdUxftRGOvO_1_fnDnEscvd9qj6qqnS-9dOYZkIrJhVYFxgmxN_0xduxtjm1eICUxBdfIQ" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=JularDepick/QzoneArchive.fork&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=JularDepick/QzoneArchive.fork&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=JularDepick/QzoneArchive.fork&type=date&legend=top-left" />
  </picture>
 </a>
 
@@ -32,11 +31,11 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 - **断点续传**：中断后自动从上次位置继续，已归档的内容不会丢失
 - **频率保护**：每 10 分钟最多请求 300 页，触发限流后安全暂停，倒计时结束即可继续
 - **互动还原**：查看每条动态的点赞用户和评论回复，支持互动排行榜
-- **本地存储**：所有数据以 SQLite 保存在本地应用数据目录，不上传任何服务器
+- **本地存储**：所有数据以 SQLite 保存在用户目录下的 `.qzonearchive.fork` 目录（该目录无写权限时自动改用应用所在目录下的同名目录），不上传任何服务器
 - **HTML 导出**：支持按分类或选中导出为独立 HTML 文件，可离线浏览
 - **媒体时光轴**：按年份浏览归档的照片和视频，视频支持按需缓存
 - **暗色模式**：跟随系统或手动切换
-- **跨平台**：Windows / macOS / Linux 桌面端 + Android 移动端
+- **跨平台**：仅提供 Windows（优先）、Linux 与 macOS 桌面端，本项目不提供移动端支持
 
 ## 截图
 
@@ -65,7 +64,7 @@ AI collaborators: please read AGENTS.md for project-specific instructions, archi
 ### 前置要求
 
 - [Node.js](https://nodejs.org/) 20+
-- Windows: [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/)（Windows 10+ 自带）
+- 无需额外运行时：应用自带 Electron 与 Chromium 内核，Windows 不再需要系统 WebView2
 
 ### 启动开发环境
 
@@ -144,7 +143,7 @@ npm run package:linux
 │   │   ├── stores/         # Pinia 状态管理
 │   │   └── utils/          # 工具函数与后端命令封装
 │   └── shared/             # 桥接契约与共享类型
-└── website/                # 文档站
+└── site/                   # 文档站
 ```
 
 ## 原理
@@ -178,14 +177,14 @@ npm run package:linux
 
 如果这个项目对你有帮助，欢迎请开发者喝杯咖啡
 
-| 微信 | 支付宝 |
-|------|--------|
-| ![微信赞赏](public/sponsor/wx.jpg) | ![支付宝赞赏](public/sponsor/zfb.jpg) |
+| 微信 | 支付宝 | 赞赏 |
+|------|--------|------|
+| ![微信收款码](public/sponsor/wechatpay.png) | ![支付宝收款码](public/sponsor/alipay.jpg) | ![赞赏码](public/sponsor/reward.png) |
 
 ## 友情链接
 
 * [LINUX DO](https://linux.do/) - 新的理想型社区
 
-## 许可证
+## 许可证与版权
 
-本项目采用 [GPLv3](LICENSE) 许可证。
+本项目沿用上游的 [GPLv3](LICENSE) 许可证，本分支（含 2.0.0 起的桌面端全量重构）的版权归属见 [COPYRIGHT](COPYRIGHT)。
