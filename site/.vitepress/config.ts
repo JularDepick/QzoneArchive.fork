@@ -4,12 +4,12 @@ export default defineConfig({
   lang: "zh-CN",
   title: "QQ空间归档",
   description: "把值得留存的 QQ 空间记忆，安静地保存在你的设备上。",
-  base: "/QzoneArchive/",
+  base: "/QzoneArchive.fork/",
   outDir: "./dist",
   themeConfig: {
     nav: [
       { text: "文档", link: "/intro/" },
-      { text: "GitHub", link: "https://github.com/Gaoshu705/QzoneArchive" },
+      { text: "GitHub", link: "https://github.com/JularDepick/QzoneArchive.fork" },
     ],
     sidebar: [
       { text: "开始使用", items: [{ text: "概览", link: "/intro/" }, { text: "安装", link: "/install/" }, { text: "首次归档", link: "/first-archive/" }, { text: "数据与安全", link: "/data-and-safety/" }] },

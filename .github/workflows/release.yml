@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 已存在的标签名, 手动补构建时使用
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  desktop:
+    name: 打包 ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            script: package:win
+            files: |
+              release/*.exe
+              release/*.exe.blockmap
+              release/latest.yml
+          - platform: linux
+            os: ubuntu-latest
+            script: package:linux
+            files: |
+              release/*.AppImage
+              release/*.deb
+          - platform: macos
+            os: macos-latest
+            script: package:mac
+            files: |
+              release/*.dmg
+              release/*.zip
+    env:
+      # 仓库没有代码签名证书, 关闭自动发现以免打包中断
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run selftest
+      - run: npm run ${{ matrix.script }}
+      - name: 附加产物到 Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: ${{ matrix.files }}

@@ -2,10 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { withBase } from "vitepress";
 
-type Platform = "windows" | "macos" | "android" | "linux";
+type Platform = "windows" | "macos" | "linux";
 type ThemeMode = "system" | "light" | "dark";
 
-const githubUrl = "https://github.com/Gaoshu705/QzoneArchive";
+const githubUrl = "https://github.com/JularDepick/QzoneArchive.fork";
 const releaseUrl = `${githubUrl}/releases/latest`;
 const scrolled = ref(false);
 const selectedPlatform = ref<Platform>("windows");
@@ -13,10 +13,9 @@ const themeMode = ref<ThemeMode>("system");
 const revealObserver = ref<IntersectionObserver | null>(null);
 
 const platforms = [
-  { id: "windows", label: "Windows", format: ".exe", arch: "x64", version: "Windows 10+", note: "推荐版本，安装后即可开始归档。" },
+  { id: "windows", label: "Windows", format: ".exe", arch: "x64", version: "Windows 10+", note: "推荐版本,NSIS 安装包按当前用户安装,不需要管理员权限。" },
   { id: "macos", label: "macOS", format: ".dmg", arch: "Apple / Intel", version: "macOS 11+", note: "请按芯片架构选择对应安装包。" },
-  { id: "android", label: "Android", format: ".apk", arch: "arm64", version: "Android 8+", note: "适合在移动设备上查看与管理归档。" },
-  { id: "linux", label: "Linux", format: ".AppImage", arch: "x86_64", version: "主流发行版", note: "无需安装，赋予执行权限后直接运行。" },
+  { id: "linux", label: "Linux", format: ".AppImage", arch: "x86_64", version: "主流发行版", note: "AppImage 免安装,赋予执行权限即可运行;Debian 与 Ubuntu 系也可以选择 .deb。" },
 ] as const;
 
 const themeModes: { id: ThemeMode; label: string }[] = [
@@ -25,7 +24,7 @@ const themeModes: { id: ThemeMode; label: string }[] = [
   { id: "dark", label: "深色" },
 ];
 
-const techStack = ["Tauri", "Vue 3", "Rust", "SQLite", "Vite", "TypeScript", "PrimeVue", "reqwest", "HTML Export", "Pinia"];
+const techStack = ["Electron", "Vue 3", "TypeScript", "SQLite", "Vite", "PrimeVue", "Pinia", "HTML Export"];
 const marqueeItems = computed(() => [...techStack, ...techStack]);
 
 const activePlatform = computed(() => platforms.find((item) => item.id === selectedPlatform.value) ?? platforms[0]);
@@ -71,8 +70,7 @@ onMounted(() => {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onSystemThemeChange);
 
   const agent = navigator.userAgent.toLowerCase();
-  if (agent.includes("android")) selectedPlatform.value = "android";
-  else if (agent.includes("mac")) selectedPlatform.value = "macos";
+  if (agent.includes("mac")) selectedPlatform.value = "macos";
   else if (agent.includes("linux")) selectedPlatform.value = "linux";
 
   updateScrollState();
@@ -130,10 +128,10 @@ onBeforeUnmount(() => {
           <div class="tech-terminal" aria-label="快速开始命令">
             <div class="tech-terminal__bar"><span></span><span></span><span></span><b>quickstart.ps1</b></div>
             <pre><code><i># 本地运行桌面端</i>
-npm run tauri dev
+npm run dev
 
 <i># 构建 Windows 安装包</i>
-npm run tauri:build:windows</code></pre>
+npm run package:win</code></pre>
           </div>
         </div>
 
@@ -161,7 +159,7 @@ npm run tauri:build:windows</code></pre>
             <article class="tech-card js-reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" /></svg><h3>完整归档</h3><p>动态正文、图片、视频、评论和互动记录按可见范围归档。</p></article>
             <article class="tech-card js-reveal" style="transition-delay: 70ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v7l4 2m5-2a9 9 0 1 1-3-6.7" /></svg><h3>可恢复进度</h3><p>网络中断或限流后，从已完成位置继续，不重新开始。</p></article>
             <article class="tech-card js-reveal" style="transition-delay: 140ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg><h3>离线导出</h3><p>按分类或选中内容导出独立 HTML，浏览器直接打开。</p></article>
-            <article class="tech-card js-reveal" style="transition-delay: 210ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 9h16M9 9v11" /></svg><h3>本地数据库</h3><p>数据保存在设备应用目录，不提供项目方云端存储。</p></article>
+            <article class="tech-card js-reveal" style="transition-delay: 210ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 9h16M9 9v11" /></svg><h3>本地数据库</h3><p>数据默认保存在用户目录下的 .qzonearchive.fork 目录,不提供项目方云端存储。</p></article>
             <article class="tech-card js-reveal" style="transition-delay: 280ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9h12M6 15h8M5 5l14 14" /></svg><h3>频率保护</h3><p>请求间隔和限流暂停机制降低被封风险，不鼓励高频抓取。</p></article>
             <article class="tech-card js-reveal" style="transition-delay: 350ms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M12 3v18" /></svg><h3>媒体时光轴</h3><p>图片和视频按年份重新排列，离线后继续浏览已缓存内容。</p></article>
           </div>
@@ -187,7 +185,7 @@ npm run tauri:build:windows</code></pre>
         <div class="tech-shell">
           <div class="tech-section__head js-reveal">
             <p class="tech-index">03 / STACK</p>
-            <div><h2>可信赖的本地技术栈</h2><p>桌面端、移动端与归档引擎共用同一套边界清晰的实现。</p></div>
+            <div><h2>可信赖的本地技术栈</h2><p>桌面端与归档引擎共用同一套边界清晰的实现。</p></div>
           </div>
           <div class="tech-marquee" aria-label="技术栈列表">
             <div class="tech-marquee__track">
@@ -206,7 +204,7 @@ npm run tauri:build:windows</code></pre>
           <div class="tech-flow js-reveal" aria-label="本地数据流">
             <div><small>01</small><strong>QQ 空间会话</strong><span>Cookie 仅用于当前会话</span></div><i>→</i>
             <div><small>02</small><strong>本机归档任务</strong><span>请求与进度在设备上处理</span></div><i>→</i>
-            <div><small>03</small><strong>SQLite + 媒体缓存</strong><span>数据保存在设备目录</span></div><i>→</i>
+            <div><small>03</small><strong>SQLite + 媒体缓存</strong><span>数据保存在用户数据目录</span></div><i>→</i>
             <div><small>04</small><strong>离线 HTML</strong><span>导出后无需联网浏览</span></div>
           </div>
           <div class="tech-local-proof js-reveal"><span>LOCAL ONLY</span><p>没有账号系统，没有同步服务器，没有隐藏的云端副本。</p><a :href="withBase('/data-and-safety/')">阅读数据说明 →</a></div>

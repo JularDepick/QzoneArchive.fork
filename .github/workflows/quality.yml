@@ -37,6 +37,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: website/package-lock.json
-      - run: npm ci --prefix website
-      - run: npm run build --prefix website
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --prefix site
+      - run: npm run build --prefix site
